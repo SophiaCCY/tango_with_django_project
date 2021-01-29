@@ -56,14 +56,3 @@ def show_category(request, category_name_slug):
     # Go render the response and return it to the client.
     return render(request, 'rango/category.html', context=context_dict)
 
-def show_page(request, page_title_slug):
-    context_dict = {}
-
-    try:
-        page = Page.objects.get(slug=page_title_slug)
-        context_dict['page'] = page
-
-    except Page.DoesNotExist:
-        context_dict['page'] = None
-
-    return render(request, 'rango/page.html', context=context_dict)
