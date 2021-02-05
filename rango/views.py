@@ -12,11 +12,7 @@ from django.contrib.auth.decorators import login_required
 from datetime import datetime
 
 def index(request):
-    # Query the database for a list of ALL categories currently stored.
-    # Order the categories by the number of likes in descending order.
-    # Retrieve the top 5 only -- or all if less than 5.
-    # Place the list in our context_dict dictionary (with our boldmessage!)
-    # that will be passed to the template engine.
+    # Query database for all categories -> order by likes
     category_list = Category.objects.order_by('-likes')[:5]
     page_list = Page.objects.order_by('-views')[:5]
 
@@ -27,37 +23,33 @@ def index(request):
 
     # Call the helper function to handle the cookies
     visitor_cookie_handler(request)
-    request.session['visits'] = int(request.COOKIES.get('visits', '1'))
-
-    # Obtain our Response object early so we can add cookie information.
+    
+    # Obtain our Response object early so we can add cookie information
     response = render(request, 'rango/index.html', context=context_dict)
-    # Return response back to the user, updating any cookies that need changed.
     return response
 
 
 def about(request):
-    if request.session.test_cookie_worked():
-        print("TEST COOKIE WORKED!")
-        request.session.delete_test_cookie()
+    context_dict = {}
+    context_dict['visits'] = request.session['visits']
+
+    visitor_cookie_handler(request)
         
-    return render(request, 'rango/about.html')
+    return render(request, 'rango/about.html', context = context_dict)
 
 def show_category(request, category_name_slug):
-    # Create a context dictionary which we can pass
-    # to the template rendering engine.
+    # Create a context dictionary
     context_dict = {}
 
     try:
-        # Can we find a category name slug with the given name?
-        # If we can't, the .get() method raises a DoesNotExist exception.
+        # If we can't find category name slug -> raises a DoesNotExist exception.
         # The .get() method returns one model instance or raises an exception.
         category = Category.objects.get(slug=category_name_slug)
 
-        # Retrieve all of the associated pages.
-        # The filter() will return a list of page objects or an empty list.
+        # Retrieve all of the associated pages -> filter
         pages = Page.objects.filter(category=category)
 
-        # Adds our results list to the template context under name pages.
+        # Adds our results list to the template
         context_dict['pages'] = pages
         
         # We also add the category object from
@@ -144,7 +136,6 @@ def register(request):
         user_form = UserForm(request.POST)
         profile_form = UserProfileForm(request.POST)
 
-        # If the two forms are valid...
         if user_form.is_valid() and profile_form.is_valid():
             # Save the user's form data to the database.
             user = user_form.save()
@@ -191,7 +182,6 @@ def register(request):
                              'registered': registered})
 
 def user_login(request):
-    # If the request is a HTTP POST, try to pull out the relevant information.
     if request.method == 'POST':
         # Gather the username and password provided by the user.
         # This information is obtained from the login form.
@@ -269,7 +259,6 @@ def get_server_side_cookie(request, cookie, default_val=None):
         last_visit_time = datetime.strptime(last_visit_cookie[:-7],
                                             '%Y-%m-%d %H:%M:%S')
 
-        # If it's been more than a day since the last visit...
         if (datetime.now() - last_visit_time).days > 0:
             visits = visits + 1
             # Update the last visit cookie now that we have updated the count
